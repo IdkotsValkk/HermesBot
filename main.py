@@ -4,8 +4,6 @@ import os
 import asyncio
 from dotenv import load_dotenv
 
-Load environment variables
-
 load_dotenv()
 
 Bot setup with necessary intents
