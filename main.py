@@ -6,14 +6,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-Bot setup with necessary intents
+# Bot setup with necessary intents
 
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
 intents.members = True  # 🔥 Add this line
 
-Auto-mode toggle
+# Auto-mode toggle
 
 auto_mode = False
 
