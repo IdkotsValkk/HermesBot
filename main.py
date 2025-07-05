@@ -11,7 +11,7 @@ load_dotenv()
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
-
+intents.members = True  # 🔥 Add this line
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 # Auto-mode toggle
